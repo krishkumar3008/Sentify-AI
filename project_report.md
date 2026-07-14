@@ -1,6 +1,6 @@
 # Project Report: Sentiment Analysis System
 
-**Authors:** NLP Sentiment Analysis Team  
+**Authors:** Krish Kumar  
 **Date:** July 14, 2026  
 **Technology Stack:** Python, FastAPI, PyTorch, Scikit-Learn, HTML5, CSS3, JavaScript  
 
