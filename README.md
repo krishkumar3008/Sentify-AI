@@ -9,6 +9,9 @@
 
 An end-to-end Natural Language Processing (NLP) pipeline that classifies the sentiment of movie reviews. The system trains and compares **Naïve Bayes**, **Logistic Regression**, and **Bidirectional LSTM** models, exposing them through both a data visualization dashboard (Streamlit) and an adaptive chatbot interface (FastAPI + HTML/CSS/JS).
 
+**Live Application Demo:** [sentifyai.streamlit.app](https://sentifyai.streamlit.app/)  
+**GitHub Repository:** [krishkumar3008/Sentify-AI](https://github.com/krishkumar3008/Sentify-AI)
+
 ---
 
 ## 📸 Interface Preview

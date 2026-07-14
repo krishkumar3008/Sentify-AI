@@ -3,6 +3,8 @@
 **Authors:** Krish Kumar  
 **Date:** July 14, 2026  
 **Technology Stack:** Python, FastAPI, PyTorch, Scikit-Learn, HTML5, CSS3, JavaScript  
+**GitHub Repository:** [krishkumar3008/Sentify-AI](https://github.com/krishkumar3008/Sentify-AI)  
+**Live Application:** [sentifyai.streamlit.app](https://sentifyai.streamlit.app/)
 
 ---
 
