@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentify AI - Sentiment Analysis & Interactive Chatbot</title>
+    <meta name="description" content="An NLP Sentiment Analysis System showcasing Naïve Bayes, Logistic Regression, and LSTM models with an interactive sentiment chatbot.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="app-container">
+        
+        <!-- Header -->
+        <header class="main-header">
+            <div class="logo-container">
+                <i class="fa-solid fa-brain-circuit logo-icon"></i>
+                <h1 id="app-title">Sentify <span class="gradient-text">AI</span></h1>
+            </div>
+            <div class="status-indicator" id="system-ready-indicator">
+                <span class="pulse-dot red" id="status-dot"></span>
+                <span class="status-label" id="status-text">Models Not Trained</span>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            
+            <!-- Left Panel: Dashboard & Control -->
+            <aside class="dashboard-panel">
+                
+                <!-- Section 1: Model Training Control -->
+                <div class="panel-card" id="training-control-card">
+                    <h2><i class="fa-solid fa-sliders-h icon-margin"></i>Model Parameters</h2>
+                    <p class="card-subtitle">Select dataset subset size for training. Larger sets increase accuracy but take longer to train.</p>
+                    
+                    <div class="form-group">
+                        <label for="dataset-size-slider">Dataset Sample Size: <span id="dataset-size-val">10,000</span> reviews</label>
+                        <input type="range" id="dataset-size-slider" min="1000" max="25000" step="1000" value="10000">
+                        <div class="slider-labels">
+                            <span>1K</span>
+                            <span>10K</span>
+                            <span>25K</span>
+                        </div>
+                    </div>
+                    
+                    <button id="train-btn" class="primary-btn">
+                        <i class="fa-solid fa-play"></i> Train Models
+                    </button>
+                    
+                    <!-- Training Progress overlay -->
+                    <div class="training-progress-container hidden" id="progress-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="progress-status-msg">Initiating training...</span>
+                            <span id="progress-percent">0%</span>
+                        </div>
+                        <div class="loader-spinner"></div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Model Accuracy Comparison Chart -->
+                <div class="panel-card hidden" id="accuracy-chart-card">
+                    <h2><i class="fa-solid fa-chart-simple icon-margin"></i>Accuracy Comparison</h2>
+                    <div class="chart-container">
+                        <canvas id="accuracy-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Section 3: Detailed Metrics Matrix -->
+                <div class="panel-card hidden" id="metrics-card">
+                    <h2><i class="fa-solid fa-table-list icon-margin"></i>Performance Metrics</h2>
+                    <div class="table-responsive">
+                        <table id="metrics-table">
+                            <thead>
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Accuracy</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="metrics-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section 4: Confusion Matrix Display -->
+                <div class="panel-card hidden" id="confusion-matrix-card">
+                    <h2><i class="fa-solid fa-grip-lines icon-margin"></i>Confusion Matrices</h2>
+                    <div class="cm-selectors">
+                        <button class="cm-tab active" data-model="naive_bayes">Naïve Bayes</button>
+                        <button class="cm-tab" data-model="logistic_regression">Log Reg</button>
+                        <button class="cm-tab" data-model="lstm">LSTM</button>
+                    </div>
+                    <div class="confusion-matrix-container">
+                        <div class="cm-grid">
+                            <div class="cm-cell label-cell"></div>
+                            <div class="cm-cell label-cell header-cell">Predicted Neg</div>
+                            <div class="cm-cell label-cell header-cell">Predicted Pos</div>
+                            
+                            <div class="cm-cell label-cell header-cell row-header">Actual Neg</div>
+                            <div class="cm-cell value-cell" id="cm-tn">0</div>
+                            <div class="cm-cell value-cell" id="cm-fp">0</div>
+                            
+                            <div class="cm-cell label-cell header-cell row-header">Actual Pos</div>
+                            <div class="cm-cell value-cell" id="cm-fn">0</div>
+                            <div class="cm-cell value-cell" id="cm-tp">0</div>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- Right Panel: Interactive Sentiment Chatbot -->
+            <main class="chat-panel">
+                <div class="chat-card">
+                    
+                    <!-- Chat Header -->
+                    <div class="chat-header">
+                        <div class="bot-avatar-container">
+                            <div class="bot-avatar-pulse"></div>
+                            <div class="bot-avatar" id="chatbot-avatar">🤖</div>
+                        </div>
+                        <div class="chat-header-info">
+                            <h2>Sentify Bot</h2>
+                            <p id="bot-persona-status">Adapting response style dynamically to your message's sentiment</p>
+                        </div>
+                        <div class="model-selection-pill">
+                            <label for="active-model-select">Primary Decision Model:</label>
+                            <select id="active-model-select">
+                                <option value="naive_bayes">Naïve Bayes</option>
+                                <option value="logistic_regression" selected>Logistic Regression</option>
+                                <option value="lstm">LSTM (PyTorch)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages List -->
+                    <div class="chat-messages-container" id="chat-messages">
+                        <div class="chat-message bot">
+                            <div class="message-bubble">
+                                Hi there! I'm Sentify Bot. Type anything below, and I will analyze the sentiment of your message using our machine learning models! You can see predictions of all three models side-by-side. 
+                                <br><br>
+                                <strong class="warning-text"><i class="fa-solid fa-circle-exclamation"></i> Note:</strong> Please train the models in the left panel first if they aren't ready.
+                            </div>
+                            <div class="message-timestamp">Just now</div>
+                        </div>
+                    </div>
+
+                    <!-- Realtime Prediction Bar (Shows dynamic result of the last message) -->
+                    <div class="realtime-predictions-overlay hidden" id="realtime-predictions-panel">
+                        <div class="prediction-header">
+                            <span>Analysis for: <em id="analyzed-text-snippet">""</em></span>
+                            <button id="close-predictions-btn"><i class="fa-solid fa-times"></i></button>
+                        </div>
+                        <div class="predictions-grid">
+                            
+                            <!-- Naïve Bayes Prediction -->
+                            <div class="prediction-card" id="pred-nb-card">
+                                <div class="pred-title">Naïve Bayes</div>
+                                <div class="pred-sentiment" id="pred-nb-sentiment">-</div>
+                                <div class="confidence-bar-bg">
+                                    <div class="confidence-bar-fill" id="pred-nb-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="pred-confidence" id="pred-nb-conf">Confidence: 0%</div>
+                            </div>
+                            
+                            <!-- Logistic Regression Prediction -->
+                            <div class="prediction-card" id="pred-lr-card">
+                                <div class="pred-title">Logistic Regression</div>
+                                <div class="pred-sentiment" id="pred-lr-sentiment">-</div>
+                                <div class="confidence-bar-bg">
+                                    <div class="confidence-bar-fill" id="pred-lr-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="pred-confidence" id="pred-lr-conf">Confidence: 0%</div>
+                            </div>
+                            
+                            <!-- LSTM Prediction -->
+                            <div class="prediction-card" id="pred-lstm-card">
+                                <div class="pred-title">LSTM (PyTorch)</div>
+                                <div class="pred-sentiment" id="pred-lstm-sentiment">-</div>
+                                <div class="confidence-bar-bg">
+                                    <div class="confidence-bar-fill" id="pred-lstm-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="pred-confidence" id="pred-lstm-conf">Confidence: 0%</div>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Chat Input Controls -->
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Type a movie review or a sentence..." disabled>
+                        <button id="send-btn" class="send-btn" disabled>
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </main>
+
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 Sentify AI. Built using FastAPI, PyTorch, Scikit-Learn, and Chart.js.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
