@@ -138,6 +138,10 @@
                             <h2>Sentify Bot</h2>
                             <p id="bot-persona-status">Adapting response style dynamically to your message's sentiment</p>
                         </div>
+                        <div class="chat-header-tabs">
+                            <button class="chat-header-tab active" id="tab-btn-chat"><i class="fa-solid fa-comments"></i> Chat</button>
+                            <button class="chat-header-tab" id="tab-btn-batch"><i class="fa-solid fa-rectangle-list"></i> Batch Analyzer</button>
+                        </div>
                         <div class="model-selection-pill">
                             <label for="active-model-select">Primary Decision Model:</label>
                             <select id="active-model-select">
@@ -207,6 +211,72 @@
                         <button id="send-btn" class="send-btn" disabled>
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
+                    </div>
+
+                    <!-- Batch Analysis Interface -->
+                    <div class="batch-analysis-panel hidden" id="batch-analysis-panel">
+                        <div class="batch-input-area">
+                            <h2><i class="fa-solid fa-upload icon-margin"></i>Batch Text Input</h2>
+                            <p class="card-subtitle" style="margin-bottom: 12px;">Paste multiple reviews/tweets (one per line) or drag and drop a CSV file containing reviews.</p>
+                            
+                            <textarea id="batch-text-input" class="batch-textarea" placeholder="Paste reviews here. One review per line...&#10;e.g.&#10;This movie was absolutely amazing!&#10;I hated it, total waste of time.&#10;It was average, nothing special."></textarea>
+                            
+                            <div class="file-upload-wrapper">
+                                <i class="fa-solid fa-file-csv" style="font-size: 24px; color: var(--color-primary); margin-bottom: 8px; display: block;"></i>
+                                <span class="file-upload-text" id="upload-label-text">Click or Drag & Drop CSV / TXT File</span>
+                                <input type="file" id="batch-file-input" accept=".csv, .txt">
+                            </div>
+                        </div>
+
+                        <div class="batch-action-row">
+                            <span id="batch-file-status" class="file-upload-text">No file chosen</span>
+                            <button id="batch-analyze-btn" class="primary-btn" style="width: auto; padding: 10px 24px;">
+                                <i class="fa-solid fa-chart-pie"></i> Analyze Batch
+                            </button>
+                        </div>
+
+                        <!-- Batch Results Container (Hidden by default) -->
+                        <div class="batch-results-container hidden" id="batch-results-area">
+                            <div class="batch-chart-wrapper">
+                                <canvas id="batch-donut-chart"></canvas>
+                            </div>
+                            <div class="batch-table-wrapper">
+                                <div class="batch-table-container">
+                                    <table class="batch-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 70%">Text Snippet</th>
+                                                <th style="width: 30%">Sentiment</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="batch-table-tbody">
+                                            <!-- Dynamically populated -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Batch KPI Stats -->
+                        <div class="kpi-grid hidden" id="batch-kpi-area">
+                            <div class="kpi-card">
+                                <div class="kpi-val" id="kpi-total-val">0</div>
+                                <div class="kpi-label">Total</div>
+                            </div>
+                            <div class="kpi-card pos-kpi">
+                                <div class="kpi-val" id="kpi-pos-val">0%</div>
+                                <div class="kpi-label">Positive</div>
+                            </div>
+                            <div class="kpi-card neg-kpi">
+                                <div class="kpi-val" id="kpi-neg-val">0%</div>
+                                <div class="kpi-label">Negative</div>
+                            </div>
+                            <div class="kpi-card neu-kpi">
+                                <div class="kpi-val" id="kpi-neu-val">0%</div>
+                                <div class="kpi-label">Neutral</div>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>

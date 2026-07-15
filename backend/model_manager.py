@@ -301,6 +301,17 @@ class ModelManager:
             "confusion_matrix": cm
         }
 
+    def _get_3class_sentiment(self, prob_pos):
+        """Maps positive probability to 3-class sentiment with confidence"""
+        prob_pos = float(prob_pos)
+        if prob_pos > 0.60:
+            return "positive", prob_pos
+        elif prob_pos < 0.40:
+            return "negative", 1.0 - prob_pos
+        else:
+            # Scaled confidence to represent how centered/neutral it is
+            return "neutral", 1.0 - 2.0 * abs(prob_pos - 0.5)
+
     def predict(self, text):
         """Predicts sentiment using all three trained models"""
         if self.preprocessor is None:
@@ -314,11 +325,11 @@ class ModelManager:
         # 1. Naïve Bayes prediction
         if self.nb_model is not None:
             nb_prob = self.nb_model.predict_proba(tfidf_repr)[0]
-            nb_pred_label = int(np.argmax(nb_prob))
-            nb_confidence = float(nb_prob[nb_pred_label])
+            prob_pos = float(nb_prob[1])
+            sentiment, confidence = self._get_3class_sentiment(prob_pos)
             results["naive_bayes"] = {
-                "sentiment": "positive" if nb_pred_label == 1 else "negative",
-                "confidence": nb_confidence
+                "sentiment": sentiment,
+                "confidence": confidence
             }
         else:
             results["naive_bayes"] = {"sentiment": "Not Trained", "confidence": 0}
@@ -326,11 +337,11 @@ class ModelManager:
         # 2. Logistic Regression prediction
         if self.lr_model is not None:
             lr_prob = self.lr_model.predict_proba(tfidf_repr)[0]
-            lr_pred_label = int(np.argmax(lr_prob))
-            lr_confidence = float(lr_prob[lr_pred_label])
+            prob_pos = float(lr_prob[1])
+            sentiment, confidence = self._get_3class_sentiment(prob_pos)
             results["logistic_regression"] = {
-                "sentiment": "positive" if lr_pred_label == 1 else "negative",
-                "confidence": lr_confidence
+                "sentiment": sentiment,
+                "confidence": confidence
             }
         else:
             results["logistic_regression"] = {"sentiment": "Not Trained", "confidence": 0}
@@ -344,11 +355,10 @@ class ModelManager:
             with torch.no_grad():
                 prob = self.lstm_model(input_tensor).item()
                 
-            lstm_label = "positive" if prob >= 0.5 else "negative"
-            lstm_confidence = prob if prob >= 0.5 else (1.0 - prob)
+            sentiment, confidence = self._get_3class_sentiment(prob)
             results["lstm"] = {
-                "sentiment": lstm_label,
-                "confidence": float(lstm_confidence)
+                "sentiment": sentiment,
+                "confidence": confidence
             }
         else:
             results["lstm"] = {"sentiment": "Not Trained", "confidence": 0}

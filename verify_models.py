@@ -106,9 +106,11 @@ def run_tests():
     print("\n[Test 5] Testing Inference of Trained Models...")
     pos_review = "This film is absolutely gorgeous and brilliant! I loved every minute of it."
     neg_review = "This movie is terrible. The acting is horrible and it is a total waste of time."
+    neutral_review = "It was okay, nothing special but not bad either."
     
     pos_pred = manager.predict(pos_review)
     neg_pred = manager.predict(neg_review)
+    neutral_pred = manager.predict(neutral_review)
     
     print(f"Review: '{pos_review}'")
     for model_name, res in pos_pred.items():
@@ -118,11 +120,27 @@ def run_tests():
     for model_name, res in neg_pred.items():
         print(f"  - {model_name}: {res['sentiment']} ({res['confidence']*100:.1f}%)")
         
+    print(f"Review: '{neutral_review}'")
+    for model_name, res in neutral_pred.items():
+        print(f"  - {model_name}: {res['sentiment']} ({res['confidence']*100:.1f}%)")
+        
     # Check general direction of logistic regression prediction for safety
     assert pos_pred['logistic_regression']['sentiment'] == 'positive', "Positive inference mismatch"
     assert neg_pred['logistic_regression']['sentiment'] == 'negative', "Negative inference mismatch"
     
-    print("=> Inference checks PASSED!")
+    # 7. Test Batch predictions
+    print("\n[Test 6] Testing Batch Predictions...")
+    batch_texts = [pos_review, neg_review, neutral_review]
+    batch_results = []
+    for text in batch_texts:
+        batch_results.append({
+            "text": text,
+            "predictions": manager.predict(text)
+        })
+    print(f"Batch processed {len(batch_results)} texts successfully.")
+    assert len(batch_results) == 3, "Batch results length mismatch"
+    
+    print("=> Inference and batch checks PASSED!")
     print("\n==================================================")
     print("All verification tests passed successfully!")
     print("==================================================")

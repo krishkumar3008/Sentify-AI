@@ -60,12 +60,32 @@ const doc = {
     predLSTMBar: document.getElementById('pred-lstm-bar'),
     predLSTMConf: document.getElementById('pred-lstm-conf'),
     predLSTMCard: document.getElementById('pred-lstm-card'),
+
+    // Header Tabs
+    tabBtnChat: document.getElementById('tab-btn-chat'),
+    tabBtnBatch: document.getElementById('tab-btn-batch'),
+
+    // Batch Analysis Panel
+    batchPanel: document.getElementById('batch-analysis-panel'),
+    batchTextInput: document.getElementById('batch-text-input'),
+    batchFileInput: document.getElementById('batch-file-input'),
+    batchFileStatus: document.getElementById('batch-file-status'),
+    batchAnalyzeBtn: document.getElementById('batch-analyze-btn'),
+    batchResultsArea: document.getElementById('batch-results-area'),
+    batchKpiArea: document.getElementById('batch-kpi-area'),
+    batchTableTbody: document.getElementById('batch-table-tbody'),
+    kpiTotal: document.getElementById('kpi-total-val'),
+    kpiPos: document.getElementById('kpi-pos-val'),
+    kpiNeg: document.getElementById('kpi-neg-val'),
+    kpiNeu: document.getElementById('kpi-neu-val')
 };
 
 // Global App State
 let activeMetrics = null;
 let pollInterval = null;
 let chartInstance = null;
+let batchChartInstance = null;
+let batchUploadedTexts = [];
 
 // Initialize Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
@@ -103,6 +123,16 @@ function initApp() {
         doc.predOverlay.classList.add('hidden');
     });
 
+    // Tab Switching
+    doc.tabBtnChat.addEventListener('click', () => switchTab('chat'));
+    doc.tabBtnBatch.addEventListener('click', () => switchTab('batch'));
+
+    // Batch File Upload Change
+    doc.batchFileInput.addEventListener('change', handleBatchFileUpload);
+
+    // Batch Analyze Button
+    doc.batchAnalyzeBtn.addEventListener('click', triggerBatchAnalysis);
+
     // Initial check of backend state
     checkSystemStatus();
 }
@@ -134,12 +164,20 @@ function setSystemReady(isReady, message) {
         doc.chatInput.disabled = false;
         doc.sendBtn.disabled = false;
         doc.chatInput.placeholder = 'Write a review/statement to test sentiment...';
+        doc.batchAnalyzeBtn.disabled = false;
+        doc.batchTextInput.disabled = false;
+        doc.batchFileInput.disabled = false;
+        doc.batchTextInput.placeholder = 'Paste reviews here. One review per line...\ne.g.\nThis movie was absolutely amazing!\nI hated it, total waste of time.\nIt was average, nothing special.';
     } else {
         doc.statusDot.className = 'pulse-dot red';
         doc.statusText.textContent = message;
         doc.chatInput.disabled = true;
         doc.sendBtn.disabled = true;
         doc.chatInput.placeholder = 'Please train the models on the left to activate chatbot...';
+        doc.batchAnalyzeBtn.disabled = true;
+        doc.batchTextInput.disabled = true;
+        doc.batchFileInput.disabled = true;
+        doc.batchTextInput.placeholder = 'Please train the models on the left to activate batch analyzer...';
     }
 }
 
@@ -446,6 +484,9 @@ function renderRealtimePredictionOverlay(originalText, predictions) {
 
 function populateIndividualPred(predObj, sentimentEl, barFillEl, labelConfEl, cardEl) {
     const isPos = predObj.sentiment === 'positive';
+    const isNeg = predObj.sentiment === 'negative';
+    const isNeu = predObj.sentiment === 'neutral';
+    
     sentimentEl.textContent = predObj.sentiment;
     sentimentEl.className = `pred-sentiment ${predObj.sentiment}`;
     
@@ -456,8 +497,10 @@ function populateIndividualPred(predObj, sentimentEl, barFillEl, labelConfEl, ca
     cardEl.className = 'prediction-card';
     if (isPos) {
         cardEl.classList.add('pos-style');
-    } else {
+    } else if (isNeg) {
         cardEl.classList.add('neg-style');
+    } else {
+        cardEl.classList.add('neu-style');
     }
 }
 
@@ -472,13 +515,19 @@ function generateChatbotResponse(predictions) {
     const positiveReplies = [
         `That sounds really positive! 😊 (My ${selectedModel} model detects positive sentiment with ${confidence.toFixed(1)}% confidence). It's great to hear such encouraging words!`,
         `I sense positive vibes from your message! ✨ According to ${selectedModel} (${confidence.toFixed(1)}% confidence), this is definitely positive. Thank you for sharing that upbeat review!`,
-        `Awesome! 🌟 That reviews sounds positive! The ${selectedModel} model classifies this as positive with ${confidence.toFixed(1)}% confidence.`
+        `Awesome! 🌟 That review sounds positive! The ${selectedModel} model classifies this as positive with ${confidence.toFixed(1)}% confidence.`
     ];
     
     const negativeReplies = [
         `I've analyzed your text and detected negative sentiment. 😔 (Classified by ${selectedModel} with ${confidence.toFixed(1)}% confidence). It sounds like you had a frustrating or disappointing experience. I hope things improve!`,
         `That sounds a bit negative. 😢 My ${selectedModel} model is ${confidence.toFixed(1)}% sure of this. I understand how disappointing a bad experience can be.`,
         `Oops, that doesn't sound very good. 💔 My ${selectedModel} model detects negative sentiment with ${confidence.toFixed(1)}% confidence. Thanks for being honest, hopefully it gets better next time!`
+    ];
+
+    const neutralReplies = [
+        `I've analyzed your text and detected neutral sentiment. 😐 (Classified by ${selectedModel} with ${confidence.toFixed(1)}% confidence). It seems quite balanced or informative!`,
+        `Your message appears to be neutral or objective. 🤖 According to ${selectedModel} (${confidence.toFixed(1)}% confidence), this is neutral. Thanks for sharing this objective view!`,
+        `Understood. 📝 My ${selectedModel} model detects neutral sentiment with ${confidence.toFixed(1)}% confidence. It's balanced and matter-of-fact.`
     ];
     
     let botReply = '';
@@ -489,16 +538,251 @@ function generateChatbotResponse(predictions) {
         doc.chatbotAvatar.style.filter = 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.5))';
         doc.botPersonaStatus.textContent = 'Persona: Positive & Encouraging';
         botReply = positiveReplies[Math.floor(Math.random() * positiveReplies.length)];
-    } else {
+    } else if (sentiment === 'negative') {
         // Negative Response style
         doc.chatbotAvatar.textContent = '😔';
         doc.chatbotAvatar.style.filter = 'drop-shadow(0 0 10px rgba(244, 63, 94, 0.5))';
         doc.botPersonaStatus.textContent = 'Persona: Empathetic & Support';
         botReply = negativeReplies[Math.floor(Math.random() * negativeReplies.length)];
+    } else {
+        // Neutral Response style
+        doc.chatbotAvatar.textContent = '😐';
+        doc.chatbotAvatar.style.filter = 'drop-shadow(0 0 10px rgba(245, 158, 11, 0.5))';
+        doc.botPersonaStatus.textContent = 'Persona: Balanced & Matter-of-Fact';
+        botReply = neutralReplies[Math.floor(Math.random() * neutralReplies.length)];
     }
     
     // Delay bubble slightly for realism
     setTimeout(() => {
         appendChatMessage('bot', botReply);
     }, 600);
+}
+
+// Tab Switching Control
+function switchTab(tab) {
+    if (tab === 'chat') {
+        doc.tabBtnChat.classList.add('active');
+        doc.tabBtnBatch.classList.remove('active');
+        
+        doc.chatMessages.classList.remove('hidden');
+        // Retrieve parent chat input area
+        const inputArea = document.querySelector('.chat-input-area');
+        if (inputArea) inputArea.classList.remove('hidden');
+        doc.batchPanel.classList.add('hidden');
+    } else if (tab === 'batch') {
+        doc.tabBtnChat.classList.remove('active');
+        doc.tabBtnBatch.classList.add('active');
+        
+        doc.chatMessages.classList.add('hidden');
+        const inputArea = document.querySelector('.chat-input-area');
+        if (inputArea) inputArea.classList.add('hidden');
+        doc.predOverlay.classList.add('hidden');
+        doc.batchPanel.classList.remove('hidden');
+    }
+}
+
+// Batch File Upload Parser
+function handleBatchFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        doc.batchFileStatus.textContent = 'No file chosen';
+        batchUploadedTexts = [];
+        return;
+    }
+    
+    doc.batchFileStatus.textContent = `Selected: ${file.name}`;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        if (file.name.endsWith('.csv')) {
+            batchUploadedTexts = parseCSVColumn(content);
+        } else {
+            // text file, split by lines
+            batchUploadedTexts = content.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+        }
+        
+        doc.batchFileStatus.textContent = `${file.name} (${batchUploadedTexts.length} rows loaded)`;
+        
+        // Preview content in the textarea
+        const preview = batchUploadedTexts.slice(0, 10).join('\n');
+        doc.batchTextInput.value = preview + (batchUploadedTexts.length > 10 ? '\n... and ' + (batchUploadedTexts.length - 10) + ' more' : '');
+    };
+    reader.readAsText(file);
+}
+
+// Simple CSV column finder (looks for review, text, tweet, content, comment)
+function parseCSVColumn(csvText) {
+    const lines = csvText.split('\n');
+    if (lines.length === 0) return [];
+    
+    // Find header index
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    let colIdx = 0;
+    
+    const candidates = ['review', 'text', 'tweet', 'content', 'sentence', 'statement', 'comment'];
+    for (let candidate of candidates) {
+        const idx = headers.indexOf(candidate);
+        if (idx !== -1) {
+            colIdx = idx;
+            break;
+        }
+    }
+    
+    const results = [];
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Handle commas inside quotes in CSV
+        let fields = [];
+        let inQuotes = false;
+        let field = '';
+        for (let char of line) {
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                fields.push(field.trim());
+                field = '';
+            } else {
+                field += char;
+            }
+        }
+        fields.push(field.trim());
+        
+        if (fields[colIdx]) {
+            results.push(fields[colIdx].replace(/^"|"$/g, '').trim());
+        }
+    }
+    return results;
+}
+
+// Run batch sentiment analysis via API
+async function triggerBatchAnalysis() {
+    let texts = [];
+    
+    // Check if textbox value is valid and not just preview
+    const textBoxVal = doc.batchTextInput.value.trim();
+    if (textBoxVal && batchUploadedTexts.length === 0) {
+        texts = textBoxVal.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+    } else {
+        texts = batchUploadedTexts;
+    }
+    
+    if (texts.length === 0) {
+        alert("Please paste some text lines or upload a valid file first.");
+        return;
+    }
+    
+    // Show loading
+    doc.batchAnalyzeBtn.disabled = true;
+    doc.batchAnalyzeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
+    
+    const selectedModel = doc.activeModelSelect.value;
+    
+    try {
+        const response = await fetch('/api/predict_batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texts: texts })
+        });
+        
+        if (!response.ok) {
+            throw new Error("Batch prediction request failed");
+        }
+        
+        const data = await response.json();
+        const results = data.results;
+        
+        // Count sentiments
+        let pos = 0, neg = 0, neu = 0;
+        let tbodyHtml = '';
+        
+        results.forEach(res => {
+            const pred = res.predictions[selectedModel];
+            const sentiment = pred.sentiment;
+            if (sentiment === 'positive') pos++;
+            else if (sentiment === 'negative') neg++;
+            else if (sentiment === 'neutral') neu++;
+            
+            tbodyHtml += `
+                <tr>
+                    <td title="${res.text.replace(/"/g, '&quot;')}">${res.text}</td>
+                    <td><span class="batch-badge ${sentiment}">${sentiment}</span></td>
+                </tr>
+            `;
+        });
+        
+        const total = results.length;
+        doc.kpiTotal.textContent = total.toLocaleString();
+        doc.kpiPos.textContent = `${((pos / total) * 100).toFixed(1)}%`;
+        doc.kpiNeg.textContent = `${((neg / total) * 100).toFixed(1)}%`;
+        doc.kpiNeu.textContent = `${((neu / total) * 100).toFixed(1)}%`;
+        
+        doc.batchTableTbody.innerHTML = tbodyHtml;
+        
+        // Render Chart.js Donut Chart
+        renderBatchDonutChart(pos, neg, neu);
+        
+        // Reveal elements
+        doc.batchResultsArea.classList.remove('hidden');
+        doc.batchKpiArea.classList.remove('hidden');
+        
+    } catch (err) {
+        alert("Error running batch analysis. Check that the backend is active.");
+        console.error(err);
+    } finally {
+        doc.batchAnalyzeBtn.disabled = false;
+        doc.batchAnalyzeBtn.innerHTML = '<i class="fa-solid fa-chart-pie"></i> Analyze Batch';
+    }
+}
+
+// Render Donut Chart using Chart.js
+function renderBatchDonutChart(posCount, negCount, neuCount) {
+    const ctx = document.getElementById('batch-donut-chart').getContext('2d');
+    
+    const data = {
+        labels: ['Positive %', 'Negative %', 'Neutral %'],
+        datasets: [{
+            data: [posCount, negCount, neuCount],
+            backgroundColor: [
+                'rgba(16, 185, 129, 0.75)', // Emerald
+                'rgba(244, 63, 94, 0.75)',  // Rose
+                'rgba(245, 158, 11, 0.75)'   // Amber
+            ],
+            borderColor: [
+                '#10b981',
+                '#f43f5e',
+                '#f59e0b'
+            ],
+            borderWidth: 1.5
+        }]
+    };
+    
+    const config = {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 11 }
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    };
+    
+    if (batchChartInstance) {
+        batchChartInstance.destroy();
+    }
+    
+    batchChartInstance = new Chart(ctx, config);
 }

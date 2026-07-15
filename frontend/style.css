@@ -12,6 +12,7 @@
     --primary-hue: 262; /* Violet */
     --accent-hue: 160;  /* Emerald */
     --danger-hue: 350;  /* Rose */
+    --warning-hue: 40;   /* Amber */
     
     --color-primary: hsl(var(--primary-hue), 85%, 65%);
     --color-primary-dark: hsl(var(--primary-hue), 80%, 45%);
@@ -22,6 +23,9 @@
     
     --color-danger: hsl(var(--danger-hue), 84%, 60%);
     --color-danger-dim: hsla(var(--danger-hue), 84%, 60%, 0.15);
+    
+    --color-warning: hsl(var(--warning-hue), 95%, 60%);
+    --color-warning-dim: hsla(var(--warning-hue), 95%, 60%, 0.15);
     
     --color-bot-bubble: rgba(255, 255, 255, 0.07);
     --color-user-bubble: linear-gradient(135deg, hsl(262, 85%, 60%) 0%, hsl(230, 85%, 60%) 100%);
@@ -844,4 +848,276 @@ input[type="range"]::-webkit-slider-thumb:hover {
     color: var(--text-muted);
     border-top: 1px solid rgba(255, 255, 255, 0.03);
     margin-top: auto;
+}
+
+/* Neutral / Warning Sentiment Styles */
+.pred-sentiment.neutral {
+    color: var(--color-warning);
+}
+
+.prediction-card.neu-style {
+    background-color: var(--color-warning-dim);
+    border-color: hsla(var(--warning-hue), 95%, 60%, 0.3);
+}
+
+.prediction-card.neu-style .confidence-bar-fill {
+    background: var(--color-warning);
+}
+
+/* Chat Header Tabs for Batch Sentiment Analysis */
+.chat-header-tabs {
+    display: flex;
+    gap: 10px;
+    margin-right: 15px;
+    border-bottom: none;
+}
+
+.chat-header-tab {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chat-header-tab:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+}
+
+.chat-header-tab.active {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: var(--shadow-glow);
+}
+
+/* Batch Analysis Interface */
+.batch-analysis-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 24px;
+    gap: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.batch-input-area {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.batch-textarea {
+    width: 100%;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+.batch-textarea:focus {
+    border-color: var(--color-primary);
+}
+
+.file-upload-wrapper {
+    position: relative;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-upload-wrapper:hover {
+    border-color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.file-upload-wrapper input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-upload-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.file-upload-text i {
+    font-size: 24px;
+    color: var(--color-primary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.batch-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+/* KPI Dashboard Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.kpi-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.kpi-card.pos-kpi {
+    border-color: hsla(var(--accent-hue), 84%, 55%, 0.25);
+    background-color: var(--color-accent-dim);
+    color: var(--color-accent);
+}
+
+.kpi-card.neg-kpi {
+    border-color: hsla(var(--danger-hue), 84%, 60%, 0.25);
+    background-color: var(--color-danger-dim);
+    color: var(--color-danger);
+}
+
+.kpi-card.neu-kpi {
+    border-color: hsla(var(--warning-hue), 95%, 60%, 0.25);
+    background-color: var(--color-warning-dim);
+    color: var(--color-warning);
+}
+
+.kpi-val {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--font-heading);
+}
+
+.kpi-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Donut Chart container for Batch Results */
+.batch-results-container {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 20px;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    .batch-results-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.batch-chart-wrapper {
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.batch-table-wrapper {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+
+.batch-table-container {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.batch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+    table-layout: fixed;
+}
+
+.batch-table th, .batch-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color);
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.batch-table th {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.batch-table td {
+    white-space: nowrap;
+}
+
+.batch-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.batch-badge.positive {
+    background-color: var(--color-accent-dim);
+    color: var(--color-accent);
+}
+
+.batch-badge.negative {
+    background-color: var(--color-danger-dim);
+    color: var(--color-danger);
+}
+
+.batch-badge.neutral {
+    background-color: var(--color-warning-dim);
+    color: var(--color-warning);
 }

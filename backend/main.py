@@ -18,6 +18,9 @@ class TrainRequest(BaseModel):
 class PredictRequest(BaseModel):
     text: str
 
+class PredictBatchRequest(BaseModel):
+    texts: list[str]
+
 @app.get("/api/status")
 def get_status():
     """Returns the current background training status and metrics if available"""
@@ -62,6 +65,35 @@ def predict_sentiment(request: PredictRequest):
             "text": request.text,
             "predictions": predictions
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/predict_batch")
+def predict_batch_sentiment(request: PredictBatchRequest):
+    """Predicts the sentiment for a batch of texts using all three models"""
+    if not request.texts:
+        raise HTTPException(status_code=400, detail="Texts list cannot be empty.")
+    
+    # Check if models are ready
+    if manager.preprocessor is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Models are not trained or loaded. Please trigger training first."
+        )
+    
+    try:
+        results = []
+        for text in request.texts:
+            # Skip completely empty texts but keep tracking structure
+            cleaned_t = text.strip()
+            if not cleaned_t:
+                continue
+            predictions = manager.predict(cleaned_t)
+            results.append({
+                "text": text,
+                "predictions": predictions
+            })
+        return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
